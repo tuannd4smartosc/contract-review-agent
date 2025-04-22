@@ -1,12 +1,17 @@
-import pdfplumber
 from docx import Document
+from PyPDF2 import PdfReader
 
 def extract_text_from_pdf(pdf_path):
-    with pdfplumber.open(pdf_path) as pdf:
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text()  
-    return text
+    text = ""
+    try:
+        with open(pdf_path, 'rb') as pdf_file:
+            reader = PdfReader(pdf_file)
+            for page_num in range(len(reader.pages)):
+                page = reader.pages[page_num]
+                text += page.extract_text()
+        return text
+    except Exception as e:
+        return f"Error extracting text with PyPDF2: {e}"
 
 def extract_text_from_docx(docx_path):
     doc = Document(docx_path)
