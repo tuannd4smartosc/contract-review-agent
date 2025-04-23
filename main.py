@@ -1,8 +1,10 @@
-from utils.files import list_all_file_paths, check_extension
-from utils.extractors import extract_text_from_docx, extract_text_from_pdf
+import asyncio
+from utils.retrieve import generate_answer
 
 def main():
-    print("Hello from contract-review-agent!")
+    query = "What is the effective date of the agreement?"
+    response = asyncio.run(generate_answer(query))
+    print(response)
 
 if __name__ == "__main__":
     main()

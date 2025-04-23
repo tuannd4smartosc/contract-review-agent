@@ -1,6 +1,7 @@
 from utils.files import check_extension, get_all_file_paths_recursive
-from utils.extractors import extract_text_from_docx, extract_text_from_pdf
+from utils.extractors import extract_text_from_docx, extract_text_from_pdf, clean_html_text
 from utils.vectorize import vectorize_to_qdrant
+import asyncio
 
 def train():
     print("Hello from contract-review-agent!")
@@ -14,7 +15,7 @@ def train():
             plain_text = extract_text_from_pdf(path)
         elif is_docx:
             plain_text = extract_text_from_docx(path)
-        large_plain_text += plain_text
-    vectorize_to_qdrant(large_plain_text)
+        large_plain_text += clean_html_text(plain_text)
+    asyncio.run(vectorize_to_qdrant(large_plain_text))
 
 train()

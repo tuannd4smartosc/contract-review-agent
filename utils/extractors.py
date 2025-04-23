@@ -1,5 +1,14 @@
 from docx import Document
 from PyPDF2 import PdfReader
+import re
+import html
+
+def clean_html_text(raw_html):
+    text = re.sub(r'<.*?>', '', raw_html)
+    text = html.unescape(text)
+    text = re.sub(r'\s*\n\s*', '\n', text.strip())
+    text = re.sub(r'\s{2,}', ' ', text)
+    return text
 
 def extract_text_from_pdf(pdf_path):
     text = ""
