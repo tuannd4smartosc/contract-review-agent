@@ -6,7 +6,7 @@ import asyncio
 def train():
     print("Hello from contract-review-agent!")
     all_file_paths = get_all_file_paths_recursive("documents")
-    large_plain_text = ""
+    contract_files: list[dict] = []
     for path in all_file_paths:
         is_pdf = check_extension(path, ".pdf")
         is_docx = check_extension(path, ".docx")
@@ -15,7 +15,10 @@ def train():
             plain_text = extract_text_from_pdf(path)
         elif is_docx:
             plain_text = extract_text_from_docx(path)
-        large_plain_text += clean_html_text(plain_text)
-    asyncio.run(vectorize_to_qdrant(large_plain_text))
+        contract_files.append({
+            "source": path,
+            "text": plain_text
+        })
+    asyncio.run(vectorize_to_qdrant(contract_files))
 
 train()

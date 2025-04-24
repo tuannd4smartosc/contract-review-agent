@@ -1,45 +1,38 @@
 import streamlit as st
-import PyPDF2
-import docx
-import openai
-from ai_agents.planner import planner_agent
+from pathlib import Path
+from utils.files import check_extension
+from utils.extractors import extract_text_from_docx, extract_text_from_pdf
 
-# Configure your OpenAI API key
-openai.api_key = "your-api-key"
+# Display the selected PDF
+def display_contract_content(file_path):
+    is_pdf = check_extension(file_path, ".pdf")
+    is_docx = check_extension(file_path, ".docx")
+    plain_text = ""
+    if is_pdf:
+        plain_text = extract_text_from_pdf(file_path)
+    elif is_docx:
+        plain_text = extract_text_from_docx(file_path)
+    st.text_area("PDF Content", plain_text, height=500)
 
-st.title("🧠 AI Contract Reviewer")
+# Main Streamlit app function
+def main():
+    st.title("PDF Contract Viewer")
 
-uploaded_file = st.file_uploader("Upload a contract", type=["pdf", "docx"])
+    # List of PDF files (you can modify the path as needed)
+    pdf_folder = Path("documents/contracts")  # Make sure you have a folder named 'contracts' with PDFs
+    pdf_files = [f.name for f in pdf_folder.glob("*.pdf")]
 
-def extract_text(file):
-    if file.name.endswith(".pdf"):
-        reader = PyPDF2.PdfReader(file)
-        return "\n".join([page.extract_text() for page in reader.pages])
-    elif file.name.endswith(".docx"):
-        doc = docx.Document(file)
-        return "\n".join([para.text for para in doc.paragraphs])
-    return ""
+    if not pdf_files:
+        st.error("No PDF files found in the 'contracts' folder.")
+        return
 
-def analyze_contract(text):
-    prompt = (
-        "You are an AI contract reviewer. Carefully read the following contract text and provide a detailed analysis. "
-        "Your response should include:\n"
-        "1. A summary of the contract.\n"
-        "2. Identification of any ambiguous or unclear terms.\n"
-        "3. Potential risks or liabilities for the parties involved.\n"
-        "4. Suggestions for improving the contract to make it more robust and fair.\n\n"
-        f"Contract Text:\n\n{text[:3000]}"
-    )
-    result = planner_agent.run(prompt)
-    return result
+    # Dropdown to select a PDF file
+    selected_file = st.selectbox("Select a PDF Contract", pdf_files)
 
-if uploaded_file:
-    contract_text = extract_text(uploaded_file)
-    st.subheader("📄 Extracted Contract Text")
-    st.text_area("Text Preview", contract_text[:3000], height=200)
+    # If a file is selected, display its content
+    if selected_file:
+        file_path = pdf_folder / selected_file
+        display_contract_content(file_path)
 
-    if st.button("🔍 Analyze Contract"):
-        with st.spinner("Analyzing..."):
-            analysis = analyze_contract(contract_text)
-        st.subheader("🧾 AI Analysis")
-        st.markdown(analysis)
+if __name__ == "__main__":
+    main()

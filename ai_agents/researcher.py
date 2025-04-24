@@ -5,7 +5,7 @@ from tools.search_tools import google_tool
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 
 system_message = """
-    You are a legal research assistant specializing in contracts. Your task is to find publicly available contract playbooks for different legal agreements such as NDAs, MSAs, and SOWs.
+    You are a legal research assistant specializing in contracts. Your task is to find publicly available contract samples for different legal agreements such as NDAs, MSAs, and SOWs.
     Your responses should be concise and focused on the most relevant and trustworthy PDF files.
 """
 

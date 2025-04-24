@@ -4,6 +4,7 @@ from openai import OpenAI
 from data.upsert_qdrant import save_points_to_qdrant
 from dotenv import load_dotenv
 import asyncio
+import uuid
 
 load_dotenv() 
 
@@ -31,22 +32,34 @@ async def get_openai_embedding(text, model="text-embedding-ada-002"):
         return None
 
 
-async def vectorize_text_chunks_async(text):
-    chunks = chunk_text(text)
-
-    async def embed_and_log(idx, chunk):
+async def vectorize_text_chunks_async(contract_files: list[dict]):
+    async def embed_and_log(idx, chunk, source, chunk_total):
         embedding = await get_openai_embedding(chunk)
         if embedding:
-            print(f"awaited embedding for chunk... {idx + 1}/{len(chunks)}")
-            return (embedding, {"text": chunk})
+            print(f"awaited embedding for chunk... {idx + 1}/{chunk_total} >> {source}\n")
+            return (embedding, {"text": chunk, "chunk_index": idx, "source": source, "chunk_id": uuid.uuid4().hex})
         return None
+    
+    async def embed_contract_file(file: dict):
+        text = file["text"]
+        source = file["source"]
+        chunks = chunk_text(text)
+        
+        tasks = [embed_and_log(idx, chunk, source, len(chunks)) for idx, chunk in enumerate(chunks)]
+        results = await asyncio.gather(*tasks)
 
-    tasks = [embed_and_log(idx, chunk) for idx, chunk in enumerate(chunks)]
-    results = await asyncio.gather(*tasks)
+        vectorized_chunks = [r for r in results if r is not None]
+        return vectorized_chunks
 
-    vectorized_chunks = [r for r in results if r is not None]
-    return vectorized_chunks
+    file_tasks = [embed_contract_file(file) for file in contract_files]
+    file_results = await asyncio.gather(*file_tasks)
 
-async def vectorize_to_qdrant(text):
-    vectorized_chunks = await vectorize_text_chunks_async(text)
+    all_vectorized_chunks = [chunk for file_result in file_results for chunk in file_result]
+
+    print(all_vectorized_chunks)
+    return all_vectorized_chunks
+    
+
+async def vectorize_to_qdrant(contract_files: list[dict]):
+    vectorized_chunks = await vectorize_text_chunks_async(contract_files)
     save_points_to_qdrant(vectorized_chunks=vectorized_chunks)

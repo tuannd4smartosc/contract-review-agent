@@ -1,7 +1,7 @@
 import os
 import requests 
 
-PLAYBOOK_FOLDER = "documents/contract_playbooks"
+PLAYBOOK_FOLDER = "documents/contracts"
 
 os.makedirs(PLAYBOOK_FOLDER, exist_ok=True)
 
